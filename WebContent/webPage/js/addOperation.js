@@ -9,9 +9,10 @@ function addItem(){
 	     var values=value.split("=")[1];	     
 	     if(key!="路径"){
 	    	 submits.push({"key":key,"value":values})
-			 
+			 console.log("uu");
 	     }else{
-	    	 submitData.location=currentFileLoc;
+	    	 submitData.location=currentFile;
+	    	// console.log(values);
 	     }	     
 	});
 	submitData.allValues=JSON.stringify(submits);
@@ -55,4 +56,3 @@ function addItem(){
 	submitStr=submitStr+"}"
 	submitData.addItems=submitStr;
 	console.log(submitData);*/
-
