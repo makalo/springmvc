@@ -1,9 +1,11 @@
-
+var currentFile;
 var attribute = new Array();
 var attrColumns = [];
 var tag="y";
 var counter=1;
 $(document).ready(function(){
+	/*location.reload();*/
+	//获取所有属性值
 	$.ajax({
 		type : "GET",
 		url : "getAllAttributes",
@@ -20,35 +22,113 @@ $(document).ready(function(){
 			});
 		}
 	});
+	//下拉菜单值的选取
 	$(".search-nav .dropdown-menu li").bind("click",function(){
-
 		var attr=$(this).text();
+		$(this).parents(".input-group").find(".attr-text").text(attr);
+		$(this).parents(".input-group").find("input").val("");
 		console.log(attr);
-		$(".search-nav .search-attr .attr-text").text(attr);
 	});
-	$("#searchBtn").click(function(){
-		
-		var keys=new Array();
-		var values=new Array();
-		keys.push($(".search-nav .search-attr .attr-text").text());
-		values.push($(".search-nav input").val());
-		console.log($(".search-nav input").val());
-		startSearch(keys, values);
-	});
-	
-	
-	
-	
-	
-	
+
+	//输入搜索条件校验
+	$(".attrInput").bind("blur",function(){
+		if($(this).val()==""||$(this).val()==null){
+			$(this).parents('.form-group').addClass("has-error");
+			$("#alertMsg").text("检索条件不能为空");
+	 		$("#alertMsg").css("display","inline-block");
+	 		
+		} else{
+			$(this).parents('.form-group').removeClass("has-error");
+			$("#alertMsg").text("");
+	 		$("#alertMsg").css("display","none");
+		}      
+	}); 
+	//当modal关闭时，对元素内容清空
+	$('#searchModal').on('hide.bs.modal', function () {
+		$('#searchModal').find("input").val("");
+		$("#searchTable tbody").html("");
+		$("#attrText").text("属性选择");
+		$("#alertMsg").text("");
+ 		$("#alertMsg").css("display","none");
+ 		if($("#addSearchForm").hasClass("has-error")){
+ 			$("#addSearchForm").removeClass("has-error");
+ 		}
+})
+
 });
+
+//单条搜索
+$("#searchBtn").click(function(){
+	var keys=new Array();
+	var values=new Array();
+    keys.push($("#attrSelect").text());
+	values.push($(".search-nav input").val());
+	console.log("keys "+keys);	
+	console.log("values "+values);
+	startSearch(keys, values);
+});
+
+//将增加的搜索条件加入表格中
+function addSearchFunc(){
+	var key=$("#attrText").text();
+	var value=$("#addSearchForm .attrInput").val();
+	
+	if(key!="属性选择"&&value!=""&&value!=null){
+		$("#alertMsg").css("display","none");	
+		
+		if(!$("#addSearchForm").hasClass("has-error")){
+			$("#searchTable tbody").append('<tr ><td class="col-lg-3 col-md-3 col-xs-3 col-sm-3">'+
+					key+'</td><td class="col-lg-7 col-md-7 col-xs-7 col-sm-7">'+value+'</td>'+
+					'</td><td class="col-lg-2 col-md-2 col-xs-2 col-sm-2"><span class="delSearchSpan" style="color:#59B8EA" onclick="delectSearchRow(this)">删除</span></td>'+
+					'</tr>');
+			
+		}	
+	}else if(key=="属性选择"){
+		$("#alertMsg").text("请选择要查询的属性");
+ 		$("#alertMsg").css("display","inline-block");
+	}else if(value==""||value==null){
+		$("#alertMsg").text("检索条件不能为空");
+ 		$("#alertMsg").css("display","inline-block");
+ 		$("#addSearchForm").addClass("has-error");
+	}
+};
+//删除某一行搜索对
+function delectSearchRow(trSpan){
+	var $trSpan=$(trSpan);
+	$trSpan.parents("tr").remove();
+	
+}
+//高级搜索数据处理
+function queryDeal(){
+	var keys=new Array();
+	var values=new Array();
+	var searchTable=$("#searchTable");
+	$("#searchTable tr td:nth-child(1)").each(function () {
+		keys.push($(this).text());
+    });
+	$("#searchTable tr td:nth-child(2)").each(function () {
+		values.push($(this).text());
+    });
+	console.log("keys "+keys);	
+	console.log("values "+values);
+	//开始搜索
+	if(keys.length!=0){
+		$('#searchModal').modal('hide')
+	    startSearch(keys,values);
+	}else{
+		$("#alertMsg").text("请在表格中添加检索项");
+ 		$("#alertMsg").css("display","inline-block");
+	}
+	
+};
 function startSearch(keys, values){
     tag="y";
     counter=1;
 	searchResult(keys, values,"default");
 };
 function searchResult(keys, values,file) {
-	console.log(tag);
+	
+	console.log(keys+" "+values);
 	var data2={"keys":keys.join("."),"values":values.join("."),"flag":"a","tag":tag,"file":file};
 	    $.ajax({
 	        url: "getlists",
@@ -58,11 +138,11 @@ function searchResult(keys, values,file) {
 	        async: false, 
 	        success: function (data) {
 	        	if(counter<2){
+	        		$(".weblct-sidemenu .menu-nav").empty();
 	        		$.each(data.files, function(i, f) {
 						$(".weblct-sidemenu .menu-nav").append(
-								'<li><a href="#">'
-										+ f
-										+ '</a></li>');});
+								'<li  title="'+f+'" style="padding: 0px 0px;"><a href="#">'+f+'</a></li>'
+								);});
 		        	
 		        	$(".weblct-sidemenu .menu-nav li").bind("click",function(){
 		        		var file=$(this).text();
@@ -80,29 +160,30 @@ function searchResult(keys, values,file) {
 				attrColumns.push(t0);
 				$("#addItemForm").empty();
 				$.each(data.attributes, function(i, item) {
-					var temp = {field: item, title: item, align: "center"};//手动拼接columns
-	                attrColumns.push(temp);
-	                
-	                var formItem = '<div class="form-group">'
-						+ '<label for="formItem'
-						+ i
-						+ '" class="col-sm-4 control-label">'
-						+ item
-						+ '</label>'
-						+ ' <div class="col-sm-8">'
-						+ '<input type="text" class="form-control" id="formItem'
-						+ i
-						+ '" name="'
-						+item
-						+ '" placeholder="请输入'
-						+ item
-						+ '">'
-						+ ' </div>' + '</div>'
-				$("#addItemForm").append(formItem);
-				$("#addItemForm .form-group").first()
-						.css("display", "none");
-				
-				
+					if (item!="子路径"){
+						var temp = {field: item, title: item, align: "center"};//手动拼接columns
+		                attrColumns.push(temp);
+		                
+		                var formItem = '<div class="form-group">'
+							+ '<label for="formItem'
+							+ i
+							+ '" class="col-sm-4 control-label">'
+							+ item
+							+ '</label>'
+							+ ' <div class="col-sm-8">'
+							+ '<input type="text" class="form-control" id="formItem'
+							+ i
+							+ '" name="'
+							+item
+							+ '" placeholder="请输入'
+							+ item
+							+ '">'
+							+ ' </div>' + '</div>'
+					$("#addItemForm").append(formItem);
+					$("#addItemForm .form-group").first()
+							.css("display", "none");
+					}
+
 				});
 				t1 = {field: "operate", title: "操作", align: "center"};
 				attrColumns.push(t1);
@@ -143,6 +224,8 @@ function searchResult(keys, values,file) {
 							detailFormatter : function(index, row) {
 								var $html = $('<div class=\"detailPage\"></div>');
 								$.each(row,function(key, value) {
+									console.log(
+key);
 													if (key == "路径") {
 														$html.append('<p class="location" style="display:none"><b>'
 																		+ key
@@ -152,7 +235,7 @@ function searchResult(keys, values,file) {
 																		+ '</span>'
 																		+ '</p>');
 													}
-													if (key != 0 && key != "路径") {
+													if (key != 0 && key != "路径" && key!="子路径" && key!="del") {
 														$html.append('<p><span class=\"enEditSpan\"><span class="keySpan"><b>'
 																		+ key
 																		+ ':</b></span> '
@@ -171,6 +254,8 @@ function searchResult(keys, values,file) {
 							},
 
 							responseHandler : function(data) {
+								currentFile=data.rows[0].路径;
+								console.log(currentFile);
 								return {
 									"total" : data.total,// 总页数
 									"rows" : data.rows, // 数据
