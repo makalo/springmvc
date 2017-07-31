@@ -94,7 +94,7 @@ public class AdjustmentCenter {
 		if ("xlsx".equalsIgnoreCase(type)) {
 			int xsheetNum = Integer.parseInt(location[1]);
 			int xrowNum = Integer.parseInt(location[2]);
-			// int attrNum = changeContent.size();
+			int attrNum = changeContent.size();
 			if ("revise".equalsIgnoreCase(opType)) {
 				revise.reviseExcel2007(xsheetNum, xrowNum, fileName,changeContent);
 			} else if ("delRow".equalsIgnoreCase(opType)) {
@@ -107,7 +107,7 @@ public class AdjustmentCenter {
 		} else if ("xls".equalsIgnoreCase(type)) {
 			int hsheetNum = Integer.parseInt(location[1]);
 			int hrowNum = Integer.parseInt(location[2]);
-			// int attrNum = changeContent.size();
+		        int attrNum = changeContent.size();
 			if ("revise".equalsIgnoreCase(opType)) {
 				revise.reviseExcel2007(hsheetNum, hrowNum, fileName,changeContent);
 			} else if ("delRow".equalsIgnoreCase(opType)) {
